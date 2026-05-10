@@ -1,47 +1,75 @@
-# taxi-service
+# taxi-system
 
-Сервис такси на Spring Boot.
+Микросервисный сервис заказа такси.
 
-## Services
+---
 
-- `user-service` (`:8081`) - пассажиры, водители, auth
-- `trip-service` (`:8082`) - поездки, статусы, рейтинг, статистика
-- `notification-worker-service` (`:8083`) - задачи уведомлений и воркеры
-- Infra: PostgreSQL (`:5433`), Redis (`:6379`), RabbitMQ (`:5672`, UI `:15672`)
+## Компоненты
 
-## Run
+- user-service (8081) - регистрация, авторизация, профили пассажиров и водителей
+- trip-service (8082) - создание поездок, статусы, рейтинг, статистика
+- notification-worker-service (8083) - отправка уведомлений
 
-```bash
+Инфраструктура:
+- PostgreSQL (5433)
+- Redis (6379)
+- RabbitMQ (5672, UI:15672)
+
+---
+
+## Запуск
+
 docker-compose up --build
-```
 
-### User Service (`http://localhost:8081`)
+---
 
-- `POST /auth/register` - регистрация пользователя (PASSENGER/DRIVER)
-- `POST /auth/login` - логин
-- `GET /passengers/{id}` - получить пассажира
-- `PATCH /passengers/{id}` - обновить профиль пассажира
-- `GET /drivers/{id}` - получить водителя
-- `PATCH /drivers/{id}` - обновить профиль водителя
-- `PATCH /drivers/{id}/status` - обновить статус водителя (AVAILABLE/BUSY/OFFLINE)
+## API
 
-Internal endpoints (межсервисные):
+### User Service (localhost:8081)
 
-- `GET /internal/passengers/{id}/exists` - проверка существования пассажира
-- `GET /internal/drivers/available` - список свободных водителей
-- `POST /internal/drivers/assign` - атомарно назначить свободного водителя (pessimistic lock + LIMIT 1)
-- `PATCH /internal/drivers/{id}/status` - обновить статус водителя
+Регистрация и авторизация:
+POST /auth/register - создание пользователя (типы: PASSENGER, DRIVER)
+POST /auth/login - вход
 
-### Trip Service (`http://localhost:8082`)
+Пассажиры:
+GET /passengers/{id}
+PATCH /passengers/{id}
 
-- `POST /trips` - создать поездку (автоматически назначает водителя через user-service)
-- `GET /trips/{id}` - получить поездку
-- `GET /trips?passenger_id={id}` - история поездок пассажира
-- `PATCH /trips/{id}/status` - обновить статус поездки
-- `POST /trips/{id}/rate` - оценить поездку (1-5)
-- `GET /trips/stats` - статистика поездок (за день, средняя цена)
+Водители:
+GET /drivers/{id}
+PATCH /drivers/{id}
+PATCH /drivers/{id}/status
 
-### Notification Worker Service (`http://localhost:8083`)
+Внутренние эндпоинты (между сервисами):
+GET /internal/passengers/{id}/exists
+GET /internal/drivers/available
+POST /internal/drivers/assign
+PATCH /internal/drivers/{id}/status
 
-- `POST /notifications` - создать задачу уведомления
-- `GET /notifications?trip_id={id}` - получить уведомления по поездке
+### Trip Service (localhost:8082)
+
+POST /trips - создание поездки (водитель назначается автоматически)
+GET /trips/{id} - детали поездки
+GET /trips?passenger_id={id} - история поездок пассажира
+PATCH /trips/{id}/status - обновление статуса
+POST /trips/{id}/rate - оценка поездки (1-5)
+GET /trips/stats - статистика (поездок за день, средняя цена)
+
+### Notification Worker Service (localhost:8083)
+
+POST /notifications - создание уведомления
+GET /notifications?trip_id={id} - получение уведомлений по поездке
+
+---
+
+## Тестирование
+
+cd tests
+python3 tests.py
+
+---
+## Примечания
+
+- При создании поездки водитель назначается через атомарный запрос к user-service с использованием pessimistic lock
+- Статус водителя меняется на BUSY после назначения поездки
+- После завершения поездки статус водителя возвращается в AVAILABLE
