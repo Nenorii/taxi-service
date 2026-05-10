@@ -1,0 +1,31 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: trip-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/trip_db
+    username: taxi
+    password: taxi
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+jwt:
+  secret: taxi-service-jwt-secret-key-that-is-at-least-256-bits-long-for-hs256
+
+user-service:
+  url: http://localhost:8081
+
+price:
+  rate-per-km: 30
