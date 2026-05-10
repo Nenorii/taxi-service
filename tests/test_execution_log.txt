@@ -1,0 +1,588 @@
+
+################################################################################
+# STEP 01: Create passenger account
+################################################################################
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "rider_d78e0284@example.org",
+  "password": "qwerty789",
+  "name": "[SYSTEMTEST] Passenger Account #d78e0284",
+  "phone": "+74958413400",
+  "userType": "PASSENGER"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyaWRlcl9kNzhlMDI4NEBleGFtcGxlLm9yZyIsInVzZXJUeXBlIjoiUEFTU0VOR0VSIiwidXNlcklkIjo0OSwiaWF0IjoxNzc4NDEzNDAxLCJleHAiOjE3Nzg0OTk4MDF9.LZhu8Ru1T0z0--7Y0LxgRMhXzD0fqjx1IwQttUu8I_kMYqpztg0nEGT4N8H1Q2XqWDtNFUloIceetsIcnHs9SA",
+  "userType": "PASSENGER",
+  "userId": 49
+}
+
+################################################################################
+# STEP 02: Create driver account and mark as available
+################################################################################
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "chauffeur_83e4c059@example.org",
+  "password": "qwerty789",
+  "name": "[SYSTEMTEST] Driver Account #83e4c059",
+  "phone": "+74968413401",
+  "userType": "DRIVER",
+  "licenseNumber": "DRV-83E4C059"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjaGF1ZmZldXJfODNlNGMwNTlAZXhhbXBsZS5vcmciLCJ1c2VyVHlwZSI6IkRSSVZFUiIsInVzZXJJZCI6NTAsImlhdCI6MTc3ODQxMzQwMSwiZXhwIjoxNzc4NDk5ODAxfQ.GciaXJtfZG3MGNcVpqVbggThCLaLmF8JW16ewYHQr_npwnd7Lzg-ig3Qc3n2clRJ6dhtcNI3-YSQLxdRs54X8w",
+  "userType": "DRIVER",
+  "userId": 50
+}
+  >>> REQUEST: PATCH http://localhost:8081/drivers/50/status
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "status": "AVAILABLE"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 50,
+  "name": "[SYSTEMTEST] Driver Account #83e4c059",
+  "email": "chauffeur_83e4c059@example.org",
+  "phone": "+74968413401",
+  "licenseNumber": "DRV-83E4C059",
+  "status": "AVAILABLE",
+  "createdAt": "2026-05-10T11:43:21.232297"
+}
+
+################################################################################
+# STEP 03: Retrieve and verify passenger and driver profiles
+################################################################################
+  >>> REQUEST: GET http://localhost:8081/passengers/49
+      headers: {
+  "Authorization": "Bearer ***"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 49,
+  "name": "[SYSTEMTEST] Passenger Account #d78e0284",
+  "email": "rider_d78e0284@example.org",
+  "phone": "+74958413400",
+  "createdAt": "2026-05-10T11:43:21.055722"
+}
+  >>> REQUEST: GET http://localhost:8081/drivers/50
+      headers: {
+  "Authorization": "Bearer ***"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 50,
+  "name": "[SYSTEMTEST] Driver Account #83e4c059",
+  "email": "chauffeur_83e4c059@example.org",
+  "phone": "+74968413401",
+  "licenseNumber": "DRV-83E4C059",
+  "status": "AVAILABLE",
+  "createdAt": "2026-05-10T11:43:21.232297"
+}
+
+################################################################################
+# STEP 04: Create a new trip request
+################################################################################
+  >>> REQUEST: POST http://localhost:8082/trips
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "passengerId": 49,
+  "origin": "Saint Petersburg, Nevsky Ave 1",
+  "destination": "Saint Petersburg, Palace Square"
+}
+  <<< RESPONSE: 201
+      body: {
+  "id": 25,
+  "passengerId": 49,
+  "driverId": 45,
+  "status": "DRIVER_ASSIGNED",
+  "origin": "Saint Petersburg, Nevsky Ave 1",
+  "destination": "Saint Petersburg, Palace Square",
+  "price": 0.0,
+  "rating": null,
+  "createdAt": "2026-05-10T11:43:22.105480406",
+  "updatedAt": "2026-05-10T11:43:22.105501671"
+}
+     Trip price received: 0.0
+
+################################################################################
+# STEP 05: Fetch trip details and passenger trip history
+################################################################################
+  >>> REQUEST: GET http://localhost:8082/trips/25
+      headers: {
+  "Authorization": "Bearer ***"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 25,
+  "passengerId": 49,
+  "driverId": 45,
+  "status": "DRIVER_ASSIGNED",
+  "origin": "Saint Petersburg, Nevsky Ave 1",
+  "destination": "Saint Petersburg, Palace Square",
+  "price": 0.0,
+  "rating": null,
+  "createdAt": "2026-05-10T11:43:22.10548",
+  "updatedAt": "2026-05-10T11:43:22.105502"
+}
+  >>> REQUEST: GET http://localhost:8082/trips
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      params:  {
+  "passenger_id": 49
+}
+  <<< RESPONSE: 200
+      body: [
+  {
+    "id": 25,
+    "passengerId": 49,
+    "driverId": 45,
+    "status": "DRIVER_ASSIGNED",
+    "origin": "Saint Petersburg, Nevsky Ave 1",
+    "destination": "Saint Petersburg, Palace Square",
+    "price": 0.0,
+    "rating": null,
+    "createdAt": "2026-05-10T11:43:22.10548",
+    "updatedAt": "2026-05-10T11:43:22.105502"
+  }
+]
+
+################################################################################
+# STEP 06: Advance trip status through IN_PROGRESS to COMPLETED
+################################################################################
+  >>> REQUEST: PATCH http://localhost:8082/trips/25/status
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "status": "IN_PROGRESS"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 25,
+  "passengerId": 49,
+  "driverId": 45,
+  "status": "IN_PROGRESS",
+  "origin": "Saint Petersburg, Nevsky Ave 1",
+  "destination": "Saint Petersburg, Palace Square",
+  "price": 0.0,
+  "rating": null,
+  "createdAt": "2026-05-10T11:43:22.10548",
+  "updatedAt": "2026-05-10T11:43:22.105502"
+}
+  >>> REQUEST: PATCH http://localhost:8082/trips/25/status
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "status": "COMPLETED"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 25,
+  "passengerId": 49,
+  "driverId": 45,
+  "status": "COMPLETED",
+  "origin": "Saint Petersburg, Nevsky Ave 1",
+  "destination": "Saint Petersburg, Palace Square",
+  "price": 0.0,
+  "rating": null,
+  "createdAt": "2026-05-10T11:43:22.10548",
+  "updatedAt": "2026-05-10T11:43:22.367332"
+}
+
+################################################################################
+# STEP 07: Submit rating for completed trip
+################################################################################
+  >>> REQUEST: POST http://localhost:8082/trips/25/rate
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "rating": 5
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 25,
+  "passengerId": 49,
+  "driverId": 45,
+  "status": "COMPLETED",
+  "origin": "Saint Petersburg, Nevsky Ave 1",
+  "destination": "Saint Petersburg, Palace Square",
+  "price": 0.0,
+  "rating": 5,
+  "createdAt": "2026-05-10T11:43:22.10548",
+  "updatedAt": "2026-05-10T11:43:22.403291"
+}
+
+################################################################################
+# STEP 08: Retrieve trip statistics
+################################################################################
+  >>> REQUEST: GET http://localhost:8082/trips/stats
+      headers: {
+  "Authorization": "Bearer ***"
+}
+  <<< RESPONSE: 200
+      body: {
+  "tripsToday": 25,
+  "averagePrice": 4.3032
+}
+
+################################################################################
+# STEP 09: Verify notifications generated from trip events
+################################################################################
+  >>> REQUEST: GET http://localhost:8083/notifications
+      params:  {
+  "trip_id": 25
+}
+  <<< RESPONSE: 200
+      body: [
+  {
+    "id": 64,
+    "tripId": 25,
+    "recipientType": "PASSENGER",
+    "recipientId": 49,
+    "message": "Driver assigned to your trip #25 from Saint Petersburg, Nevsky Ave 1 to Saint Petersburg, Palace Square. Price: 0.00",
+    "status": "PENDING",
+    "attempts": 0,
+    "createdAt": "2026-05-10T11:43:22.283944"
+  },
+  {
+    "id": 65,
+    "tripId": 25,
+    "recipientType": "DRIVER",
+    "recipientId": 45,
+    "message": "New trip #25 assigned: Saint Petersburg, Nevsky Ave 1 -> Saint Petersburg, Palace Square",
+    "status": "PENDING",
+    "attempts": 0,
+    "createdAt": "2026-05-10T11:43:22.364633"
+  },
+  {
+    "id": 66,
+    "tripId": 25,
+    "recipientType": "PASSENGER",
+    "recipientId": 49,
+    "message": "Your trip #25 has started!",
+    "status": "PENDING",
+    "attempts": 0,
+    "createdAt": "2026-05-10T11:43:22.374439"
+  },
+  {
+    "id": 67,
+    "tripId": 25,
+    "recipientType": "DRIVER",
+    "recipientId": 45,
+    "message": "Trip #25 status: IN_PROGRESS",
+    "status": "PENDING",
+    "attempts": 0,
+    "createdAt": "2026-05-10T11:43:22.379033"
+  },
+  {
+    "id": 68,
+    "tripId": 25,
+    "recipientType": "PASSENGER",
+    "recipientId": 49,
+    "message": "Trip #25 completed. Total: 0.00. Please rate your ride!",
+    "status": "PENDING",
+    "attempts": 0,
+    "createdAt": "2026-05-10T11:43:22.404824"
+  },
+  {
+    "id": 69,
+    "tripId": 25,
+    "recipientType": "DRIVER",
+    "recipientId": 45,
+    "message": "Trip #25 completed. Good job!",
+    "status": "PENDING",
+    "attempts": 0,
+    "createdAt": "2026-05-10T11:43:22.466137"
+  }
+]
+
+################################################################################
+# STEP 10: Create custom notification via API endpoint
+################################################################################
+  >>> REQUEST: POST http://localhost:8083/notifications
+      json:    {
+  "tripId": 25,
+  "recipientType": "PASSENGER",
+  "recipientId": 49,
+  "message": "[SYSTEMTEST] Custom notification generated at 1778413402"
+}
+  <<< RESPONSE: 201
+      body: {
+  "id": 70,
+  "tripId": 25,
+  "recipientType": "PASSENGER",
+  "recipientId": 49,
+  "message": "[SYSTEMTEST] Custom notification generated at 1778413402",
+  "status": "PENDING",
+  "attempts": 0,
+  "createdAt": "2026-05-10T11:43:22.951861442"
+}
+
+################################################################################
+# STEP 11: Verify driver assigned to only one concurrent trip
+################################################################################
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "concurrent_e2446274@test.net",
+  "password": "secret123",
+  "name": "[SYSTEMTEST] Concurrent Passenger e2446274",
+  "phone": "+79773402972",
+  "userType": "PASSENGER"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjb25jdXJyZW50X2UyNDQ2Mjc0QHRlc3QubmV0IiwidXNlclR5cGUiOiJQQVNTRU5HRVIiLCJ1c2VySWQiOjUxLCJpYXQiOjE3Nzg0MTM0MDMsImV4cCI6MTc3ODQ5OTgwM30.W9edbWoAdHS36ZBgORs0-L_JyvKmxs77_yy7i5FtZ31sSb8CBLjfqx4VqkBEDIL1PR0Z3vQp2BeKfZ9FZSlTeA",
+  "userType": "PASSENGER",
+  "userId": 51
+}
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "concurrent_fa286c40@test.net",
+  "password": "secret123",
+  "name": "[SYSTEMTEST] Concurrent Passenger fa286c40",
+  "phone": "+79773403041",
+  "userType": "PASSENGER"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjb25jdXJyZW50X2ZhMjg2YzQwQHRlc3QubmV0IiwidXNlclR5cGUiOiJQQVNTRU5HRVIiLCJ1c2VySWQiOjUyLCJpYXQiOjE3Nzg0MTM0MDMsImV4cCI6MTc3ODQ5OTgwM30.5EEp1MdLVnEfwcjpBX19fg9NOIztcz8NSIwKiAVhgkMrWYdBF6ex0kfutXue1FvZdKrGDnJH_uUFIBamDSpcsA",
+  "userType": "PASSENGER",
+  "userId": 52
+}
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "concurrent_207ef28f@test.net",
+  "password": "secret123",
+  "name": "[SYSTEMTEST] Concurrent Passenger 207ef28f",
+  "phone": "+79773403107",
+  "userType": "PASSENGER"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjb25jdXJyZW50XzIwN2VmMjhmQHRlc3QubmV0IiwidXNlclR5cGUiOiJQQVNTRU5HRVIiLCJ1c2VySWQiOjUzLCJpYXQiOjE3Nzg0MTM0MDMsImV4cCI6MTc3ODQ5OTgwM30.L0Evbm6zbCtvN7ieebQMaiBrckr13wq6pW2u5AQd9ksmc8LXkRG1na8NX-5Hx95pT28VqBzNu1bkf8Nfi5L7Pw",
+  "userType": "PASSENGER",
+  "userId": 53
+}
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "concurrent_3d546ac7@test.net",
+  "password": "secret123",
+  "name": "[SYSTEMTEST] Concurrent Passenger 3d546ac7",
+  "phone": "+79773403174",
+  "userType": "PASSENGER"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjb25jdXJyZW50XzNkNTQ2YWM3QHRlc3QubmV0IiwidXNlclR5cGUiOiJQQVNTRU5HRVIiLCJ1c2VySWQiOjU0LCJpYXQiOjE3Nzg0MTM0MDMsImV4cCI6MTc3ODQ5OTgwM30.vC9NbH93HKudEUqqI_MjCC6eAU5At0D5tq6RfgT1tNFvmHzWIwE9PF17InsV586hFIJ-ZZEkEGnigSeEbrYbUw",
+  "userType": "PASSENGER",
+  "userId": 54
+}
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "concurrent_driver_7d4b361a@test.net",
+  "password": "secret123",
+  "name": "[SYSTEMTEST] Concurrent Driver 7d4b361a",
+  "phone": "+79883403241",
+  "userType": "DRIVER",
+  "licenseNumber": "CONC-7D4B361A"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjb25jdXJyZW50X2RyaXZlcl83ZDRiMzYxYUB0ZXN0Lm5ldCIsInVzZXJUeXBlIjoiRFJJVkVSIiwidXNlcklkIjo1NSwiaWF0IjoxNzc4NDEzNDAzLCJleHAiOjE3Nzg0OTk4MDN9.0fdSFAz5EKpQO13hW2-glyL4u_Zo2qWO0NkN6Z6KtiJ07NRlCstTSq4JXV-3JfGq29EuLSJXqrHa_QQtxRwBzw",
+  "userType": "DRIVER",
+  "userId": 55
+}
+  >>> REQUEST: PATCH http://localhost:8081/drivers/55/status
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "status": "AVAILABLE"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 55,
+  "name": "[SYSTEMTEST] Concurrent Driver 7d4b361a",
+  "email": "concurrent_driver_7d4b361a@test.net",
+  "phone": "+79883403241",
+  "licenseNumber": "CONC-7D4B361A",
+  "status": "AVAILABLE",
+  "createdAt": "2026-05-10T11:43:23.304083"
+}
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "concurrent_driver_26eaeeee@test.net",
+  "password": "secret123",
+  "name": "[SYSTEMTEST] Concurrent Driver 26eaeeee",
+  "phone": "+79883403314",
+  "userType": "DRIVER",
+  "licenseNumber": "CONC-26EAEEEE"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjb25jdXJyZW50X2RyaXZlcl8yNmVhZWVlZUB0ZXN0Lm5ldCIsInVzZXJUeXBlIjoiRFJJVkVSIiwidXNlcklkIjo1NiwiaWF0IjoxNzc4NDEzNDAzLCJleHAiOjE3Nzg0OTk4MDN9.lGnwa3h11-Go21rugQBV7TlrZQdVSqMFn6ObKlnWAgRvxXv_PwZOLZ67SubnIOAFRJ8255tJ7KhtDlhpsuuQrw",
+  "userType": "DRIVER",
+  "userId": 56
+}
+  >>> REQUEST: PATCH http://localhost:8081/drivers/56/status
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "status": "AVAILABLE"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 56,
+  "name": "[SYSTEMTEST] Concurrent Driver 26eaeeee",
+  "email": "concurrent_driver_26eaeeee@test.net",
+  "phone": "+79883403314",
+  "licenseNumber": "CONC-26EAEEEE",
+  "status": "AVAILABLE",
+  "createdAt": "2026-05-10T11:43:23.374757"
+}
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "concurrent_driver_16fd90f0@test.net",
+  "password": "secret123",
+  "name": "[SYSTEMTEST] Concurrent Driver 16fd90f0",
+  "phone": "+79883403386",
+  "userType": "DRIVER",
+  "licenseNumber": "CONC-16FD90F0"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjb25jdXJyZW50X2RyaXZlcl8xNmZkOTBmMEB0ZXN0Lm5ldCIsInVzZXJUeXBlIjoiRFJJVkVSIiwidXNlcklkIjo1NywiaWF0IjoxNzc4NDEzNDAzLCJleHAiOjE3Nzg0OTk4MDN9._37tGehb6qPSPE9ZN0wuOHsFaUiskLPeRqeHglm3dlT8GvIbyd5oHgm2Ikj2G4hRgPcqY1oATgdkgsb4Jy6Gig",
+  "userType": "DRIVER",
+  "userId": 57
+}
+  >>> REQUEST: PATCH http://localhost:8081/drivers/57/status
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "status": "AVAILABLE"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 57,
+  "name": "[SYSTEMTEST] Concurrent Driver 16fd90f0",
+  "email": "concurrent_driver_16fd90f0@test.net",
+  "phone": "+79883403386",
+  "licenseNumber": "CONC-16FD90F0",
+  "status": "AVAILABLE",
+  "createdAt": "2026-05-10T11:43:23.446092"
+}
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "concurrent_driver_846b646c@test.net",
+  "password": "secret123",
+  "name": "[SYSTEMTEST] Concurrent Driver 846b646c",
+  "phone": "+79883403459",
+  "userType": "DRIVER",
+  "licenseNumber": "CONC-846B646C"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjb25jdXJyZW50X2RyaXZlcl84NDZiNjQ2Y0B0ZXN0Lm5ldCIsInVzZXJUeXBlIjoiRFJJVkVSIiwidXNlcklkIjo1OCwiaWF0IjoxNzc4NDEzNDAzLCJleHAiOjE3Nzg0OTk4MDN9.iugWWB6Q8QDRcTeUMMuPn-RdZ7PhtSGbiMyql3fkpmMuDvqIQmOeLnWbDKHY5Yr0Z6MN-xsFIGyxZN68DllMTQ",
+  "userType": "DRIVER",
+  "userId": 58
+}
+  >>> REQUEST: PATCH http://localhost:8081/drivers/58/status
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "status": "AVAILABLE"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 58,
+  "name": "[SYSTEMTEST] Concurrent Driver 846b646c",
+  "email": "concurrent_driver_846b646c@test.net",
+  "phone": "+79883403459",
+  "licenseNumber": "CONC-846B646C",
+  "status": "AVAILABLE",
+  "createdAt": "2026-05-10T11:43:23.520567"
+}
+
+################################################################################
+# STEP 12: Validate RabbitMQ queue receives trip events
+################################################################################
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "rabbit_passenger_9b35e35d@test.net",
+  "password": "secret123",
+  "name": "[SYSTEMTEST] RabbitMQ Passenger",
+  "phone": "+79993403695",
+  "userType": "PASSENGER"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyYWJiaXRfcGFzc2VuZ2VyXzliMzVlMzVkQHRlc3QubmV0IiwidXNlclR5cGUiOiJQQVNTRU5HRVIiLCJ1c2VySWQiOjU5LCJpYXQiOjE3Nzg0MTM0MDMsImV4cCI6MTc3ODQ5OTgwM30.7od_GPxEEvZ77ZQW9vHtazcxjqxTrmNknT4DagfehYXuEHl0QtBBZloHVc78jvVBDUir_5J0ggtJfsFwpdYe_w",
+  "userType": "PASSENGER",
+  "userId": 59
+}
+  >>> REQUEST: POST http://localhost:8081/auth/register
+      json:    {
+  "email": "rabbit_driver_9b35e35d@test.net",
+  "password": "secret123",
+  "name": "[SYSTEMTEST] RabbitMQ Driver",
+  "phone": "+79003403772",
+  "userType": "DRIVER",
+  "licenseNumber": "RABBIT-9B35E35D"
+}
+  <<< RESPONSE: 201
+      body: {
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyYWJiaXRfZHJpdmVyXzliMzVlMzVkQHRlc3QubmV0IiwidXNlclR5cGUiOiJEUklWRVIiLCJ1c2VySWQiOjYwLCJpYXQiOjE3Nzg0MTM0MDMsImV4cCI6MTc3ODQ5OTgwM30.yQZ38g2Vtcfj0HSzOFqSwLVzygOJNeC7IAeXYY49NL6E3fbdL5QRYGztIVQe6mrxrf1LZlZ-RpHGAeshtOPb3g",
+  "userType": "DRIVER",
+  "userId": 60
+}
+  >>> REQUEST: PATCH http://localhost:8081/drivers/60/status
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "status": "AVAILABLE"
+}
+  <<< RESPONSE: 200
+      body: {
+  "id": 60,
+  "name": "[SYSTEMTEST] RabbitMQ Driver",
+  "email": "rabbit_driver_9b35e35d@test.net",
+  "phone": "+79003403772",
+  "licenseNumber": "RABBIT-9B35E35D",
+  "status": "AVAILABLE",
+  "createdAt": "2026-05-10T11:43:23.832728"
+}
+  >>> REQUEST: POST http://localhost:8082/trips
+      headers: {
+  "Authorization": "Bearer ***"
+}
+      json:    {
+  "passengerId": 59,
+  "origin": "Moscow, Garden Ring",
+  "destination": "Moscow, Third Ring Road"
+}
+  <<< RESPONSE: 201
+      body: {
+  "id": 30,
+  "passengerId": 59,
+  "driverId": 55,
+  "status": "DRIVER_ASSIGNED",
+  "origin": "Moscow, Garden Ring",
+  "destination": "Moscow, Third Ring Road",
+  "price": 0.0,
+  "rating": null,
+  "createdAt": "2026-05-10T11:43:23.86473498",
+  "updatedAt": "2026-05-10T11:43:23.864744072"
+}
